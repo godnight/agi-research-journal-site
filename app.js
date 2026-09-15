@@ -12,16 +12,19 @@ const text = value => Array.isArray(value) ? value.join('；') : (value || '');
 const domainName = id => data.domains.find(d=>d.id===id)?.name || text(id);
 const safeUrl = value => { try { const url = new URL(value); return ['https:', 'http:'].includes(url.protocol) ? url.href : null; } catch { return null; } };
 const externalLink = (source, className = '') => { const url = safeUrl(source.url); return url ? `<a class="${className}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(source.name || source.title || new URL(url).hostname)} <span aria-hidden="true">↗</span></a>` : `<span>${esc(source.name || '')}</span>`; };
-const head = (eyebrow, title, subtitle, issue = '') => `<div class="page-heading"><div><p class="eyebrow">${esc(eyebrow)}</p><h1>${esc(title)}</h1><p class="subline">${esc(subtitle)}</p></div>${issue ? `<div class="issue-number">${esc(issue)}<small>RESEARCH NOTES</small></div>` : ''}</div>`;
+const head = (eyebrow, title, subtitle, issue = '') => `<div class="page-heading"><div class="heading-copy"><p class="eyebrow">${esc(eyebrow)}</p><h1>${esc(title)}</h1><p class="subline">${esc(subtitle)}</p><span class="heading-ornament" aria-hidden="true">✧</span></div>${issue ? `<div class="issue-number">${esc(issue)}<small>RESEARCH NOTES</small></div>` : ''}</div>`;
 function navigation(active, date) {
+  main.setAttribute('data-section', active);
+  main.setAttribute('data-layout', 'reader');
   document.querySelectorAll('[data-nav]').forEach(a => { const selected = a.dataset.nav === active; a.classList.toggle('active', selected); selected ? a.setAttribute('aria-current','page') : a.removeAttribute('aria-current'); });
   const links = data.digests.map((d,i) => `<a class="archive-link ${d.date === date ? 'active' : ''}" href="#daily/${d.date}" ${d.date === date ? 'aria-current="page"' : ''}>${esc(dateText(d.date))}<small>${i === 0 ? '最近归档 · ' : ''}${d.kind === 'backfill' ? '补查日报' : '研究资讯日报'}</small></a>`).join('');
-  sidebar.innerHTML = `<p class="eyebrow">阅读归档 / ${data.digests.length}</p><div class="archive-list">${links}</div><div class="sidebar-note"><strong>每天 09:00 · 北京时间</strong>计划收集后同步阅读站。最新归档以实际日期为准。</div><div class="sidebar-note"><strong>研究资料</strong><div class="side-links"><a href="#document/open-source-learning">开源学习项目 ↗</a><a href="#document/advanced-repos">进阶研究实现 ↗</a><a href="#document/source-radar">来源核验方法 ↗</a></div></div>`;
+  sidebar.innerHTML = `<p class="eyebrow">阅读归档 / ${data.digests.length}</p><div class="archive-list">${links}</div><figure class="sidebar-art"><img src="assets/hollow-knight.webp" alt="小骑士站在泪水之城的屋檐下，望着雨中的灯火" width="480" height="720" loading="lazy" decoding="async"><figcaption><span>檐下听雨</span><small>在微光中，继续探索。</small></figcaption></figure><div class="sidebar-note"><strong>每天 09:00 · 北京时间</strong>计划收集后同步阅读站。最新归档以实际日期为准。</div><div class="sidebar-note"><strong>研究资料</strong><div class="side-links"><a href="#document/open-source-learning">开源学习项目 ↗</a><a href="#document/advanced-repos">进阶研究实现 ↗</a><a href="#document/source-radar">来源核验方法 ↗</a></div></div>`;
 }
 function renderDaily(date, domain = '') {
   const digest = date ? data.digests.find(d => d.date === date) : data.digests[0];
   if (!digest) return renderMissing('未找到这期日报');
   navigation('daily', digest.date);
+  main.setAttribute('data-layout', 'overview');
   document.title = `${digest.date} · AGI 研究手记`;
   const domains = [...new Set(digest.items.map(item => text(item.domain)).filter(Boolean))];
   const filtered = domain ? digest.items.filter(item => text(item.domain) === domain) : digest.items;
@@ -59,10 +62,12 @@ function renderReader(record, kind, section) {
 }
 function renderMap() {
   navigation('map');document.title='AGI 研究地图 · AGI 研究手记';
+  main.setAttribute('data-layout', 'overview');
   main.innerHTML = head(`研究地图 / ${data.domains.length} 个领域`,'把进展，放回研究问题里','资料基线：2026.09.05 · 每日新增进展请查看简报') + `<p class="page-intro">从已有能力出发，关注新任务学习、长期可靠性与开放世界迁移的差距。能力广度、自主程度和评测成绩需要分开理解。</p><div class="reading-actions"><span class="subline">现状 · 差距 · 可验证的问题</span><a class="text-link" href="#document/agi-landscape">阅读完整地图与证据 ↗</a></div><div class="domain-grid">${data.domains.map((d,i)=>`<article class="domain-card"><span class="domain-number">${String(i+1).padStart(2,'0')}</span><h2>${esc(d.name)}</h2><p>${esc(text(d.summary))}</p><div class="gap"><strong>关键差距</strong>${esc(text(d.gap))}</div></article>`).join('')}</div><div class="reading-actions"><a class="text-link" href="#document/open-source-learning">开源学习项目 ↗</a><a class="text-link" href="#document/advanced-repos">进阶研究实现 ↗</a></div>`;
 }
 function renderSources(type = '') {
   navigation('sources');document.title='来源目录 · AGI 研究手记';
+  main.setAttribute('data-layout', 'overview');
   const sources = data.sources || [];
   const types = [...new Set(sources.map(s=>text(s.type)).filter(Boolean))];
   const filtered = type ? sources.filter(s=>text(s.type)===type) : sources;
